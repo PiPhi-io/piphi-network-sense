@@ -1,0 +1,91 @@
+{
+  "id": "io.piphi.sense.device-breakdown",
+  "name": "Sense device breakdown",
+  "version": "0.1.0",
+  "entry": "./dist/widget.js",
+  "binding_modes": [
+    "read"
+  ],
+  "value_kinds": [
+    "numeric",
+    "boolean",
+    "enum",
+    "text"
+  ],
+  "capability_requirements": [
+    "device_power_w",
+    "device_on",
+    "device_daily_energy_kwh"
+  ],
+  "sdk_compatibility": {
+    "minimum": "0.3.0"
+  },
+  "conformance": {
+    "accessibility": "wcag2.2-aa",
+    "keyboard": true,
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "directions": [
+      "ltr",
+      "rtl"
+    ],
+    "states": [
+      "loading",
+      "live",
+      "stale",
+      "offline",
+      "reconnecting",
+      "denied",
+      "error"
+    ]
+  },
+  "settings_schema_version": "1",
+  "settings": [
+    {
+      "id": "title",
+      "type": "text",
+      "label": "Title",
+      "default": "Detected devices"
+    },
+    {
+      "id": "devices",
+      "type": "devices",
+      "label": "Devices",
+      "required": true
+    }
+  ],
+  "layout": {
+    "min_height": 180,
+    "default_height": 320,
+    "max_height": 720
+  },
+  "previews": {
+    "light": "./previews/light.svg",
+    "dark": "./previews/dark.svg"
+  },
+  "translations": {
+    "en": {
+      "widget.title": "Detected devices",
+      "widget.waiting": "Waiting for Sense devices"
+    },
+    "es": {
+      "widget.title": "Dispositivos detectados",
+      "widget.waiting": "Esperando dispositivos Sense"
+    },
+    "ar": {
+      "widget.title": "الأجهزة المكتشفة",
+      "widget.waiting": "في انتظار أجهزة Sense"
+    }
+  },
+  "security": {
+    "permissions": [],
+    "sandbox": [
+      "allow-scripts"
+    ],
+    "csp": {
+      "connect_src": []
+    }
+  }
+}
