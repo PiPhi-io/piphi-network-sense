@@ -32,7 +32,7 @@ jobs:
             exit 1
           fi
           if [[ -z "$DOCKERHUB_OIDC_CONNECTIONID" ]]; then
-            echo "::error::Configure DOCKERHUB_OIDC_CONNECTIONID in the release environment or repository variables"
+            echo "::error::Configure the DOCKERHUB_OIDC_CONNECTIONID GitHub Actions variable at the organization, repository, or release-environment level"
             exit 1
           fi
       - uses: actions/checkout@v4

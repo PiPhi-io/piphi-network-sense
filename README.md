@@ -77,8 +77,12 @@ One-time repository setup:
 - Create a GitHub environment named `release`, ideally with required reviewers.
 - Configure a Docker Hub OIDC connection for this repository and environment in
   the `piphinetwork` organization, with push access to `piphi-network-sense`.
-- Set the GitHub environment or repository variable `DOCKERHUB_OIDC_CONNECTIONID`
-  to that connection ID. No Docker Hub password/token secret is needed.
+- Add the organization Actions variable `DOCKERHUB_OIDC_CONNECTIONID` under
+  **PiPhi-io → Settings → Secrets and variables → Actions → Variables**, set it
+  to that connection ID, and grant `piphi-network-sense` repository access (or
+  make it available to all repositories). No Docker Hub password/token secret
+  is needed. The `release` environment remains the protected deployment and
+  OIDC identity; the connection ID itself may come from the organization variable.
 
 After merging the release workflow and version changes, create and push the
 matching tag, then run **Actions → Publish Sense release → Run workflow** on
