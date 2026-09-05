@@ -64,3 +64,32 @@ Build the production image with:
 ```bash
 docker build -t piphinetwork/piphi-network-sense:0.1.0 .
 ```
+
+## Releases
+
+The **Publish Sense release** workflow is manually dispatched with an existing
+`vMAJOR.MINOR.PATCH` tag (for example `v0.1.0`). It checks that the tag matches
+`manifest.json`, `pyproject.toml`, the runtime version in `settings.py`, and both
+manifest image references before publishing anything.
+
+One-time repository setup:
+
+- Create a GitHub environment named `release`, ideally with required reviewers.
+- Configure a Docker Hub OIDC connection for this repository and environment in
+  the `piphinetwork` organization, with push access to `piphi-network-sense`.
+- Set the GitHub environment or repository variable `DOCKERHUB_OIDC_CONNECTIONID`
+  to that connection ID. No Docker Hub password/token secret is needed.
+
+After merging the release workflow and version changes, create and push the
+matching tag, then run **Actions → Publish Sense release → Run workflow** on
+`main` with that tag as `release_ref`. The tag must contain the release scripts.
+Python tests, contract validation, widget tests/conformance, and a container
+import smoke test must pass before publication.
+
+The workflow publishes the exact versioned Docker Hub image for `linux/amd64`
+and `linux/arm64`, then creates a GitHub prerelease with the manifest, behaviors,
+widget assets, and image digest in its notes. It does not publish `latest`,
+promote registry governance, or claim runtime qualification. Registry status
+remains `draft` with zero rollout until separately approved. If an image push
+succeeds but GitHub release creation fails, the image is already published;
+check both destinations before retrying. An existing GitHub release is not overwritten.
