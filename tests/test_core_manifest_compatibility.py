@@ -25,7 +25,11 @@ def test_manifest_normalizes_and_validates_in_piphi_core() -> None:
         sys.path.remove(str(core_package_root))
 
     assert normalized["config"]["maximum_instances"] == 1
-    assert [package["id"] for package in normalized["ui"]["widget_packages"]] == [
-        "io.piphi.sense.energy-flow",
-        "io.piphi.sense.device-breakdown",
+    assert normalized["ui"]["widget_packages"] == []
+    assert normalized["ui"]["experience_packages"] == [
+        {
+            "registry_id": "io.piphi.sense-energy",
+            "version_range": ">=0.1,<1",
+            "auto_install": True,
+        }
     ]

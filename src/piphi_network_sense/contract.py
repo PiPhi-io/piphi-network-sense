@@ -60,13 +60,17 @@ CONFIG_SCHEMA: dict[str, Any] = {
         "type": "object",
         "required": ["email", "password"],
         "properties": {
-            "email": {"type": "string", "format": "email", "title": "Sense account email"},
-            "password": {"type": "string", "format": "password", "title": "Sense password"},
+            "email": {
+                "type": "string",
+                "pattern": r"^[^\s@]+@[^\s@]+\.[^\s@]+$",
+                "title": "Sense account email",
+            },
+            "password": {"type": "string", "title": "Sense password"},
             "mfa_code": {
                 "type": "string",
-                "format": "password",
                 "title": "Current MFA code",
                 "description": "Only required when Sense requests multi-factor authentication.",
+                "default": "",
             },
             "alias": {"type": "string", "title": "Display name", "default": "Sense Home"},
             "poll_interval_seconds": {

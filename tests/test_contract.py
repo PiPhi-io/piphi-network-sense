@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from piphi_network_sense.contract import CAPABILITIES, COMMANDS, REQUIRED_ENDPOINTS
+from piphi_network_sense.contract import CAPABILITIES, COMMANDS, CONFIG_SCHEMA, REQUIRED_ENDPOINTS
 from piphi_network_sense.main import app
 
 
@@ -36,12 +36,69 @@ def test_runtime_implements_contract_routes() -> None:
     assert CAPABILITIES["other_power_w"]["unit"] == "W"
 
 
-def test_manifest_declares_single_instance_and_widget_packages() -> None:
+def test_manifest_declares_single_instance_and_experience_package() -> None:
     manifest = json.loads((Path(__file__).parents[1] / "manifest.json").read_text())
     assert manifest["config"]["maximum_instances"] == 1
     assert manifest["identity"]["fields"] == ["email"]
-    assert {package["id"] for package in manifest["ui"]["widget_packages"]} == {
-        "io.piphi.sense.energy-flow",
-        "io.piphi.sense.device-breakdown",
-    }
+    assert manifest["ui"]["experience_packages"] == [
+        {
+            "registry_id": "io.piphi.sense-energy",
+            "version_range": ">=0.1,<1",
+            "auto_install": True,
+        }
+    ]
     assert set(manifest["capabilities"]) == set(CAPABILITIES)
+
+
+def test_experience_package_exposes_monitor_and_appliance_widgets() -> None:
+    package = json.loads(
+        (Path(__file__).parents[1] / "experiences/sense-energy/package.source.json").read_text()
+    )
+    assert package["owning_integration_id"] == "piphi-network-sense"
+    assert package["identity"]["version"] == "0.2.6"
+    widgets = {widget["id"]: widget for widget in package["widgets"]}
+    assert set(widgets) == {"energy-overview", "appliance-energy"}
+    monitor_capabilities = {
+        capability
+        for slot in widgets["energy-overview"]["binding_slots"]
+        for capability in slot["capability_requirements"]
+    }
+    assert {"active_power_w", "active_solar_power_w", "daily_usage_kwh"} <= monitor_capabilities
+    appliance_capabilities = {
+        capability
+        for slot in widgets["appliance-energy"]["binding_slots"]
+        for capability in slot["capability_requirements"]
+    }
+    assert appliance_capabilities == {"device_power_w", "device_daily_energy_kwh"}
+    assert widgets["energy-overview"]["runtime"] == "sandboxed_bundle"
+    assert widgets["energy-overview"]["entry"] == "assets/energy-overview.js"
+    assert "recipe" not in widgets["energy-overview"]
+    assert widgets["appliance-energy"]["runtime"] == "declarative"
+
+
+def test_energy_overview_uses_a_truly_transparent_theme_canvas() -> None:
+    stylesheet = (
+        Path(__file__).parents[1]
+        / "experiences/sense-energy/themes/sense-overview.css"
+    ).read_text()
+    assert "html,\nbody,\n#piphi-widget-root,\n.sense-overview" in stylesheet
+    assert "background: transparent !important" in stylesheet
+    assert "color-scheme" not in stylesheet
+    assert "var(--piphi-widget-text" in stylesheet
+
+
+def test_energy_overview_uses_a_content_sized_live_panel() -> None:
+    root = Path(__file__).parents[1] / "experiences/sense-energy"
+    stylesheet = (root / "themes/sense-overview.css").read_text()
+    script = (root / "assets/energy-overview.js").read_text()
+    assert "grid-template-rows: auto 6.75rem auto auto auto" in stylesheet
+    assert "align-content: start" in stylesheet
+    assert "host.ready({ height: 320 })" in script
+
+
+def test_config_schema_uses_renderer_safe_validation_hints() -> None:
+    properties = CONFIG_SCHEMA["schema"]["properties"]
+    assert "format" not in properties["email"]
+    assert "format" not in properties["password"]
+    assert properties["mfa_code"]["default"] == ""
+    assert CONFIG_SCHEMA["uiSchema"]["password"]["ui:widget"] == "password"

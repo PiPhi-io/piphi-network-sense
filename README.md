@@ -39,21 +39,31 @@ The executable half uses the Runtime SDK directly: `refresh` is registered with 
 
 ## Dashboard cards
 
-Two Widget SDK projects are included:
+The integration-owned `io.piphi.sense-energy` experience package is installed
+with Sense and provides two Core-hosted cards:
 
-- `widgets/sense-energy-flow`: live home/solar power and daily consumption/production.
-- `widgets/sense-device-breakdown`: a responsive list of detected devices, Always On, and Other loads sorted by power.
+- **Sense Energy Overview**: connection, live home/solar power, daily totals,
+  Always On, and Other loads.
+- **Sense Appliance Energy**: current power and daily energy for an individual
+  appliance detected by Sense.
 
-Each widget can be validated independently:
-
-```bash
-cd widgets/sense-energy-flow
-npm install
-npm run test
-npm run conformance
-```
+The package source lives in `experiences/sense-energy/package.source.json` and
+uses the Widget SDK 0.5.1 contract. The overview has a sandboxed,
+consumption-first presentation; the appliance card remains declarative. Core
+continues to own card sizing, bindings, interaction policy, and runtime
+isolation for both.
 
 See [Sense library research](docs/sense-library-research.md) and the [Core single-instance contract](docs/core-single-instance-contract.md) for implementation constraints and the Core-side enforcement design.
+
+## Simulator
+
+The companion `piphi-integration-simulators` repository provides a `sense`
+scenario with balanced, high-load, solar-export, overnight, offline, and
+per-appliance controls. It mirrors the production entity and telemetry contract
+and uses the same integration-owned experience package as the physical runtime,
+so simulator-only widget forks are not maintained. Capability and readiness
+parity is enforced by `docs/capability-catalog.json`; physical-account validation
+remains explicitly pending.
 
 ## Runtime contract
 

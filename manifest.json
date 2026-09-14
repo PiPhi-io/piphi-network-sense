@@ -162,34 +162,11 @@
     }
   ],
   "ui": {
-    "widget_packages": [
+    "experience_packages": [
       {
-        "id": "io.piphi.sense.energy-flow",
-        "name": "Sense energy flow",
-        "version": "0.1.0",
-        "entry": "/widgets/sense-energy-flow/dist/widget.js",
-        "runtime": "prebuilt_bundle",
-        "host_bridge": {"protocol": "piphi.widget.host", "version": "1", "events": ["ready", "resize"]},
-        "binding_modes": ["read"],
-        "value_kinds": ["numeric"],
-        "capability_requirements": [
-          "active_power_w", "active_solar_power_w", "daily_usage_kwh", "daily_production_kwh"
-        ],
-        "layout": {"min_height": 180, "default_height": 260, "max_height": 480},
-        "security": {"permissions": [], "sandbox": ["allow-scripts"], "csp": {"connect_src": []}}
-      },
-      {
-        "id": "io.piphi.sense.device-breakdown",
-        "name": "Sense device breakdown",
-        "version": "0.1.0",
-        "entry": "/widgets/sense-device-breakdown/dist/widget.js",
-        "runtime": "prebuilt_bundle",
-        "host_bridge": {"protocol": "piphi.widget.host", "version": "1", "events": ["ready", "resize"]},
-        "binding_modes": ["read"],
-        "value_kinds": ["numeric", "boolean", "text"],
-        "capability_requirements": ["device_power_w", "device_on", "device_daily_energy_kwh"],
-        "layout": {"min_height": 180, "default_height": 320, "max_height": 720},
-        "security": {"permissions": [], "sandbox": ["allow-scripts"], "csp": {"connect_src": []}}
+        "registry_id": "io.piphi.sense-energy",
+        "version_range": ">=0.1,<1",
+        "auto_install": true
       }
     ]
   }
