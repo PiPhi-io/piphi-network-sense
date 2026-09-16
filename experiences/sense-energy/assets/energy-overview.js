@@ -22,38 +22,27 @@ root.innerHTML = `
       <button class="hero-reading" type="button" data-piphi-interaction-target="home-power" aria-label="View household power history">
         <span class="reading-label">Using now</span>
         <span class="hero-value"><strong data-value="home-power">—</strong><small data-unit="home-power">W</small></span>
-        <span class="live-note"><span class="pulse-dot" aria-hidden="true"></span>Live household demand</span>
       </button>
       <button class="solar-reading" type="button" data-piphi-interaction-target="solar-power" aria-label="View solar power history">
         <span class="sun-icon" aria-hidden="true">☀</span>
-        <span><small>Solar now</small><strong data-value="solar-power">—</strong><em data-unit="solar-power">W</em></span>
+        <span class="solar-copy">
+          <small>Solar now</small>
+          <span class="solar-value"><strong data-value="solar-power">—</strong><em data-unit="solar-power">W</em></span>
+        </span>
       </button>
     </section>
 
-    <section class="today-panel" aria-labelledby="sense-today-title">
-      <h3 id="sense-today-title">Today</h3>
+    <section class="today-panel" aria-label="Daily and background energy at a glance">
       <div class="today-readings">
         <button type="button" data-piphi-interaction-target="usage-today" aria-label="View daily usage history">
           <span>Used</span><strong data-value="usage-today">—</strong><small data-unit="usage-today">kWh</small>
         </button>
-        <span class="today-divider" aria-hidden="true"></span>
         <button type="button" data-piphi-interaction-target="production-today" aria-label="View daily production history">
           <span>Produced</span><strong data-value="production-today">—</strong><small data-unit="production-today">kWh</small>
         </button>
-      </div>
-    </section>
-
-    <section class="background-panel" aria-labelledby="sense-background-title">
-      <div class="background-heading">
-        <div><h3 id="sense-background-title">Background usage</h3><p><strong data-value="background-total">—</strong> W identified</p></div>
-        <span class="background-share" data-value="background-share">—</span>
-      </div>
-      <div class="distribution" role="img" aria-label="Always On and other background power distribution">
-        <span class="always-segment" data-segment="always-on"></span><span class="other-segment" data-segment="other"></span>
-      </div>
-      <div class="distribution-legend">
-        <button type="button" data-piphi-interaction-target="energy-card"><i class="always-key" aria-hidden="true"></i><span>Always on</span><strong data-value="always-on">—</strong><small>W</small></button>
-        <button type="button" data-piphi-interaction-target="energy-card"><i class="other-key" aria-hidden="true"></i><span>Other</span><strong data-value="other">—</strong><small>W</small></button>
+        <button type="button" data-piphi-interaction-target="energy-card" aria-label="View background energy details">
+          <span>Background</span><strong data-value="background-total">—</strong><small>W</small>
+        </button>
       </div>
     </section>
 
@@ -94,7 +83,7 @@ function applyState(slotId, state) {
   if (!state) return false;
   values.set(slotId, state);
   render();
-  root.querySelector(".data-status").textContent = "Sense readings are live";
+  root.querySelector(".data-status").hidden = true;
   return true;
 }
 
@@ -122,9 +111,7 @@ function render() {
   const backgroundPercent = home > 0 ? Math.min(100, (backgroundTotal / home) * 100) : 0;
 
   root.querySelector('[data-value="background-total"]').textContent = formatNumber(backgroundTotal, 0);
-  root.querySelector('[data-value="background-share"]').textContent = `${formatNumber(backgroundPercent, 0)}% of live use`;
-  root.querySelector('[data-segment="always-on"]').style.width = `${alwaysPercent}%`;
-  root.querySelector('[data-segment="other"]').style.width = `${100 - alwaysPercent}%`;
+  root.querySelector('[data-value="background-total"]').title = `${formatNumber(backgroundPercent, 0)}% of live use · ${formatNumber(alwaysPercent, 0)}% always on`;
 }
 
 async function subscribe(slotId) {
@@ -132,7 +119,9 @@ async function subscribe(slotId) {
     const stop = await host.subscribeState({ slotId }, (event) => {
       const state = stateFromEvent(event);
       if (!applyState(slotId, state) && event?.kind === "error") {
-        root.querySelector(".data-status").textContent = "Some Sense readings are unavailable";
+        const status = root.querySelector(".data-status");
+        status.hidden = false;
+        status.textContent = "Some Sense readings are unavailable";
       }
     });
     stops.push(stop);
@@ -151,9 +140,13 @@ async function loadSlot(slotId) {
 }
 
 const loaded = await Promise.all(slotIds.map(loadSlot));
-if (!loaded.some(Boolean)) root.querySelector(".data-status").textContent = "Waiting for Sense data";
+if (!loaded.some(Boolean)) {
+  const status = root.querySelector(".data-status");
+  status.hidden = false;
+  status.textContent = "Waiting for Sense data";
+}
 await Promise.all(liveSlotIds.map(subscribe));
-await host.ready({ height: 320 });
+await host.ready({ height: 168 });
 
 const refreshTimer = window.setInterval(() => {
   void Promise.all(slotIds.map(loadSlot));

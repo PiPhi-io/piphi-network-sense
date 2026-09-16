@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "identity": {"publisher_id": "io.piphi", "package_id": "sense-energy", "version": "0.2.6"},
+  "identity": {"publisher_id": "io.piphi", "package_id": "sense-energy", "version": "0.2.10"},
   "name": "Sense Energy",
   "description": "Live household, solar, and detected-appliance energy views for Sense monitors.",
   "origin": "integration",
@@ -12,7 +12,7 @@
     {
       "id": "energy-overview",
       "name": "Sense Energy Overview",
-      "description": "Live household and solar power with daily energy totals and baseline loads.",
+      "description": "Live household and solar power with the most useful daily and background totals.",
       "runtime": "sandboxed_bundle",
       "entry": "assets/energy-overview.js",
       "themes": [
@@ -27,7 +27,7 @@
         {"id": "usage-today", "label": "Energy used today", "kind": "binding", "binding_slot_id": "usage-today", "allowed_actions": ["more-info", "history", "popout"], "default_action": "history"},
         {"id": "production-today", "label": "Energy produced today", "kind": "binding", "binding_slot_id": "production-today", "allowed_actions": ["more-info", "history", "popout"], "default_action": "history"}
       ],
-      "core_card_replacements": [{"schema_version": "1", "id": "sense-energy-overview-v1", "source_card_types": ["energy-flow", "sensor-card", "stat"], "source_capability_ids": ["active_power_w", "active_solar_power_w", "daily_usage_kwh", "daily_production_kwh"], "strategy": "same-device"}],
+      "core_card_replacements": [{"schema_version": "1", "id": "sense-energy-overview-v1", "source_card_types": ["sensor-card", "stat"], "source_capability_ids": ["active_power_w", "active_solar_power_w", "daily_usage_kwh", "daily_production_kwh"], "strategy": "same-device"}],
       "binding_slots": [
         {"id": "connected", "label": "Connection", "required": true, "binding_modes": ["read"], "value_kinds": ["boolean"], "capability_requirements": ["connected"], "compatible_integration_ids": ["piphi-network-sense"], "data_delivery": {"mode": "stream_preferred", "stale_after_seconds": 180}},
         {"id": "home-power", "label": "Household power", "required": true, "binding_modes": ["read"], "value_kinds": ["numeric"], "capability_requirements": ["active_power_w"], "compatible_integration_ids": ["piphi-network-sense"], "data_delivery": {"mode": "stream_preferred", "stale_after_seconds": 180}},
@@ -38,7 +38,7 @@
         {"id": "other", "label": "Other", "required": false, "binding_modes": ["read"], "value_kinds": ["numeric"], "capability_requirements": ["other_power_w"], "compatible_integration_ids": ["piphi-network-sense"], "data_delivery": {"mode": "stream_preferred", "stale_after_seconds": 180}}
       ],
       "default_column_span": 6,
-      "default_row_span": 4
+      "default_row_span": 3
     },
     {
       "id": "appliance-energy",

@@ -55,7 +55,7 @@ def test_experience_package_exposes_monitor_and_appliance_widgets() -> None:
         (Path(__file__).parents[1] / "experiences/sense-energy/package.source.json").read_text()
     )
     assert package["owning_integration_id"] == "piphi-network-sense"
-    assert package["identity"]["version"] == "0.2.6"
+    assert package["identity"]["version"] == "0.2.10"
     widgets = {widget["id"]: widget for widget in package["widgets"]}
     assert set(widgets) == {"energy-overview", "appliance-energy"}
     monitor_capabilities = {
@@ -87,13 +87,35 @@ def test_energy_overview_uses_a_truly_transparent_theme_canvas() -> None:
     assert "var(--piphi-widget-text" in stylesheet
 
 
-def test_energy_overview_uses_a_content_sized_live_panel() -> None:
+def test_energy_overview_uses_a_glance_sized_live_panel() -> None:
     root = Path(__file__).parents[1] / "experiences/sense-energy"
     stylesheet = (root / "themes/sense-overview.css").read_text()
     script = (root / "assets/energy-overview.js").read_text()
-    assert "grid-template-rows: auto 6.75rem auto auto auto" in stylesheet
+    assert "grid-template-rows: auto 4.7rem auto" in stylesheet
     assert "align-content: start" in stylesheet
-    assert "host.ready({ height: 320 })" in script
+    assert "host.ready({ height: 168 })" in script
+    assert "background-panel" not in script
+    assert "Live household demand" not in script
+    assert 'root.querySelector(".data-status").hidden = true' in script
+
+
+def test_energy_overview_uses_the_core_widget_type_scale() -> None:
+    root = Path(__file__).parents[1] / "experiences/sense-energy"
+    stylesheet = (root / "themes/sense-overview.css").read_text()
+    script = (root / "assets/energy-overview.js").read_text()
+
+    for token in [
+        "--piphi-widget-font-size-label",
+        "--piphi-widget-font-size-title",
+        "--piphi-widget-font-size-value",
+        "--piphi-widget-font-size-hero",
+    ]:
+        assert token in stylesheet
+    assert ".hero-value strong { font-size: var(--sense-type-hero)" in stylesheet
+    assert ".solar-reading strong { font-size: var(--sense-type-hero)" in stylesheet
+    assert ".today-readings strong { font-size: var(--sense-type-value)" in stylesheet
+    assert "clamp(" not in stylesheet
+    assert 'class="solar-value"' in script
 
 
 def test_config_schema_uses_renderer_safe_validation_hints() -> None:
