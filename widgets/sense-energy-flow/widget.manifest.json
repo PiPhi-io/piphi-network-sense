@@ -1,7 +1,7 @@
 {
   "id": "io.piphi.sense.energy-flow",
   "name": "Sense energy flow",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "entry": "./dist/widget.js",
   "binding_modes": [
     "read"
@@ -16,8 +16,11 @@
     "daily_production_kwh"
   ],
   "sdk_compatibility": {
-    "minimum": "0.3.0"
+    "minimum": "0.6.1"
   },
+  "interaction_targets": [
+    {"id": "energy-flow-card", "label": "Sense energy flow", "kind": "card", "allowed_actions": ["more-info", "popout", "refresh"], "default_action": "more-info"}
+  ],
   "conformance": {
     "accessibility": "wcag2.2-aa",
     "keyboard": true,
@@ -55,9 +58,9 @@
     }
   ],
   "layout": {
-    "min_height": 180,
-    "default_height": 260,
-    "max_height": 480
+    "min_height": 112,
+    "default_height": 156,
+    "max_height": 240
   },
   "previews": {
     "light": "./previews/light.svg",
