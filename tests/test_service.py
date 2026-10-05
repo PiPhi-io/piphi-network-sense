@@ -103,10 +103,10 @@ async def test_service_reuses_one_client_and_rejects_second_instance(monkeypatch
     assert [delivery["device_id"] for delivery in deliveries] == ["monitor-1", "oven"]
     assert deliveries[1]["metrics"] == {
         "device_power_w": 800.0,
-        "is_on": True,
+        "device_on": True,
         "device_daily_energy_kwh": 1.2,
     }
-    assert deliveries[1]["units"]["is_on"] == "bool"
+    assert deliveries[1]["units"]["device_on"] == "bool"
 
     with pytest.raises(HTTPException) as exc_info:
         await service.configure(

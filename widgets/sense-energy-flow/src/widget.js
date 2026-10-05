@@ -1,4 +1,5 @@
 import { getInjectedPiPhiWidgetHost } from "piphi-network-widget-sdk";
+import { createSenseStateReducer, describeSenseStreamEvent } from "./state.js";
 
 const host = getInjectedPiPhiWidgetHost();
 const root = document.querySelector("#piphi-widget-root") || document.body;
@@ -7,16 +8,22 @@ const title = await host.translate("widget.title");
 
 root.innerHTML = `
   <style>
-    :root { color-scheme: light dark; font: 14px/1.4 system-ui, sans-serif; }
-    main { box-sizing: border-box; min-height: 240px; padding: 18px; color: CanvasText; background: Canvas; }
-    h2 { margin: 0 0 14px; font-size: 1rem; }
-    .flow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; }
-    .value { font-size: clamp(1.5rem, 7vw, 2.7rem); font-weight: 750; font-variant-numeric: tabular-nums; }
-    .solar { text-align: end; color: #15945d; }
-    .arrow { font-size: 1.6rem; opacity: .65; }
-    .daily { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-    .daily div { border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: 12px; padding: 10px; }
-    small, [role=status] { opacity: .68; }
+    :root { color-scheme: light dark; --sense-flow-solar:#08784b; font:var(--piphi-widget-font-size,14px)/1.4 var(--piphi-widget-font-family,system-ui,sans-serif); }
+    :root[data-piphi-color-scheme=dark] { --sense-flow-solar:#6ee7b7; }
+    * { box-sizing:border-box; }
+    main { min-height:0; padding:4px; color:var(--piphi-widget-text,#0f172a); background:transparent; overflow:hidden; }
+    h2 { margin:0 0 8px; font-size:1rem; line-height:1.25; }
+    .flow { min-height:64px; display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; padding:6px 4px; border-inline-start:2px solid var(--piphi-widget-accent,#ff5b35); }
+    .value { font-size:clamp(1.5rem,7vw,2.25rem); line-height:1.05; font-weight:750; font-variant-numeric:tabular-nums; }
+    .solar { text-align:end; color:var(--sense-flow-solar); }
+    .arrow { font-size:1.35rem; color:var(--piphi-widget-text-muted,#52647a); }
+    .daily { display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:6px; padding-top:6px; border-top:1px solid var(--piphi-widget-border,#d7dee8); }
+    .daily div { min-width:0; min-height:44px; padding:4px 8px; }
+    .daily div + div { border-inline-start:1px solid var(--piphi-widget-border,#d7dee8); }
+    small,[role=status] { color:var(--piphi-widget-text-muted,#52647a); font-size:.75rem; }
+    [role=status][hidden] { display:none; }
+    @container (max-width:260px) { .arrow { display:none; } .flow { grid-template-columns:1fr 1fr; } }
+    @media (forced-colors:active) { .flow,.daily,.daily div + div { border-color:CanvasText; } }
   </style>
   <main dir="${context.localization?.direction || "ltr"}">
     <h2>${escapeHtml(title)}</h2>
@@ -29,28 +36,36 @@ root.innerHTML = `
       <div><small>Used today</small><strong data-key="daily_usage_kwh">—</strong> kWh</div>
       <div><small>Produced today</small><strong data-key="daily_production_kwh">—</strong> kWh</div>
     </section>
-    <p role="status">loading</p>
+    <p role="status" hidden>Waiting for Sense data</p>
   </main>`;
 
 const status = root.querySelector("[role=status]");
+const stateReducer = createSenseStateReducer();
 const stop = await host.subscribeState(
   { capabilityIds: ["active_power_w", "active_solar_power_w", "daily_usage_kwh", "daily_production_kwh"] },
   (event) => {
-    status.textContent = event.status || event.kind;
-    if (event.kind !== "snapshot" && event.kind !== "point") return;
-    const state = extractState(event.data);
+    const stream = describeSenseStreamEvent(event);
+    status.hidden = stream.hidden;
+    status.textContent = stream.message;
+    const state = stateReducer.apply(event).values;
+    if (event.kind !== "snapshot" && event.kind !== "point") {
+      syncHeight();
+      return;
+    }
     for (const node of root.querySelectorAll("[data-key]")) {
       const value = state[node.dataset.key];
       if (value !== undefined && value !== null) node.textContent = formatNumber(value);
     }
+    syncHeight();
   },
 );
 
 window.addEventListener("pagehide", stop, { once: true });
-await host.ready({ height: 260 });
+await host.ready({ height: 156 });
 
-function extractState(data) {
-  return data?.primaryState || data?.state || data?.value || data || {};
+function syncHeight() {
+  const measured = Number(root.querySelector("main")?.scrollHeight);
+  void host.setHeight?.(Math.min(240, Math.max(112, measured || 156)));
 }
 
 function formatNumber(value) {

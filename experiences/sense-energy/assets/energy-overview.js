@@ -12,9 +12,9 @@ root.innerHTML = `
         <span class="eyebrow">Live energy</span>
         <h2>Home usage</h2>
       </div>
-      <button class="connection" type="button" data-piphi-interaction-target="energy-card" aria-label="View Sense connection details">
+      <button class="connection" type="button" data-piphi-interaction-target="energy-card" aria-label="View Sense connection details" hidden>
         <span class="connection-dot" aria-hidden="true"></span>
-        <span data-value="connected">Connecting</span>
+        <span data-value="connected">Unavailable</span>
       </button>
     </header>
 
@@ -50,9 +50,12 @@ root.innerHTML = `
   </main>`;
 
 const values = new Map();
-const stops = [];
 const slotIds = ["connected", "home-power", "solar-power", "usage-today", "production-today", "always-on", "other"];
-const liveSlotIds = ["home-power", "solar-power", "always-on", "other"];
+const { bindings = [] } = await host.getBindings();
+const capabilityToSlot = new Map(bindings
+  .filter((slot) => slotIds.includes(slot.id) && slot.binding?.capabilityId)
+  .map((slot) => [slot.binding.capabilityId, slot.id]));
+let stopLive;
 
 function numericValue(value) {
   const number = Number(value);
@@ -62,21 +65,6 @@ function numericValue(value) {
 function formatNumber(value, maximumFractionDigits = 1) {
   const number = numericValue(value);
   return number === null ? "—" : new Intl.NumberFormat(undefined, { maximumFractionDigits }).format(number);
-}
-
-function stateFromResult(result) {
-  const state = result?.primaryState || result?.states?.[0];
-  return state ? { value: state.value ?? state.display_value, unit: state.unit } : null;
-}
-
-function stateFromEvent(event) {
-  if (event?.kind === "point") {
-    return { value: event.data?.value, unit: event.data?.unit };
-  }
-  if (event?.kind === "snapshot") {
-    return stateFromResult(event.data);
-  }
-  return null;
 }
 
 function applyState(slotId, state) {
@@ -95,7 +83,9 @@ function render() {
     if (slotId === "connected") {
       const connected = state.value === true || state.value === 1 || ["true", "on", "online", "connected"].includes(String(state.value).toLowerCase());
       valueNode.textContent = connected ? "Connected" : "Unavailable";
-      root.querySelector(".connection")?.classList.toggle("is-connected", connected);
+      const connection = root.querySelector(".connection");
+      connection.hidden = connected;
+      connection.classList.toggle("has-attention", !connected);
       continue;
     }
     valueNode.textContent = formatNumber(state.value, slotId.includes("today") ? 1 : 0);
@@ -114,45 +104,62 @@ function render() {
   root.querySelector('[data-value="background-total"]').title = `${formatNumber(backgroundPercent, 0)}% of live use · ${formatNumber(alwaysPercent, 0)}% always on`;
 }
 
-async function subscribe(slotId) {
+async function subscribeReadings() {
+  const capabilityIds = bindings
+    .filter((slot) => slotIds.includes(slot.id) && slot.binding?.capabilityId)
+    .map((slot) => slot.binding.capabilityId);
+  if (!capabilityIds.length) return;
   try {
-    const stop = await host.subscribeState({ slotId }, (event) => {
-      const state = stateFromEvent(event);
-      if (!applyState(slotId, state) && event?.kind === "error") {
+    stopLive = await host.subscribeState({ capabilityIds }, (event) => {
+      if (event?.kind === "point") {
+        const slotId = capabilityToSlot.get(event.data?.capabilityId);
+        if (slotId) applyState(slotId, { value: event.data?.value, unit: event.data?.unit });
+      } else if (event?.kind === "snapshot") {
+        for (const state of event.data?.states ?? []) {
+          const slotId = capabilityToSlot.get(state.capability_id);
+          if (slotId) applyState(slotId, { value: state.value ?? state.display_value, unit: state.unit });
+        }
+      } else if (event?.kind === "error") {
         const status = root.querySelector(".data-status");
         status.hidden = false;
         status.textContent = "Some Sense readings are unavailable";
       }
     });
-    stops.push(stop);
   } catch (error) {
-    console.warn(`Sense live subscription unavailable for ${slotId}`, error);
+    console.warn("Sense readings subscription unavailable", error);
+    const status = root.querySelector(".data-status");
+    status.hidden = false;
+    status.textContent = "Sense readings are temporarily unavailable";
   }
 }
 
-async function loadSlot(slotId) {
-  try {
-    return applyState(slotId, stateFromResult(await host.getCapabilityState({ slotId })));
-  } catch (error) {
-    console.warn(`Sense reading unavailable for ${slotId}`, error);
-    return false;
-  }
-}
-
-const loaded = await Promise.all(slotIds.map(loadSlot));
-if (!loaded.some(Boolean)) {
+if (!capabilityToSlot.size) {
   const status = root.querySelector(".data-status");
   status.hidden = false;
-  status.textContent = "Waiting for Sense data";
+  status.textContent = "Choose a Sense monitor in card settings";
 }
-await Promise.all(liveSlotIds.map(subscribe));
-await host.ready({ height: 168 });
+await subscribeReadings();
 
-const refreshTimer = window.setInterval(() => {
-  void Promise.all(slotIds.map(loadSlot));
-}, 30_000);
+let resizeFrame = 0;
+const minimumGlanceHeight = 168;
+function measuredContentHeight() {
+  return Math.max(
+    minimumGlanceHeight,
+    Math.ceil(root.querySelector(".sense-overview").scrollHeight),
+  );
+}
+function reportContentHeight() {
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame = requestAnimationFrame(() => {
+    void host.setHeight(measuredContentHeight()).catch(() => undefined);
+  });
+}
+const resizeObserver = new ResizeObserver(reportContentHeight);
+resizeObserver.observe(root.querySelector(".sense-overview"));
+await host.ready({ height: measuredContentHeight() });
 
 window.addEventListener("pagehide", () => {
-  window.clearInterval(refreshTimer);
-  for (const stop of stops) void stop();
+  cancelAnimationFrame(resizeFrame);
+  resizeObserver.disconnect();
+  if (stopLive) void stopLive();
 }, { once: true });

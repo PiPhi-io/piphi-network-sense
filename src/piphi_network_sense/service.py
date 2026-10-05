@@ -159,7 +159,7 @@ class SenseRuntimeService:
                 container_id=active.entry.get("container_id"),
                 metrics={
                     "device_power_w": device.power_w,
-                    "is_on": device.is_on,
+                    "device_on": device.is_on,
                     "device_daily_energy_kwh": device.daily_energy_kwh,
                 },
                 units=DEVICE_TELEMETRY_UNITS,
@@ -183,7 +183,7 @@ TELEMETRY_UNITS = {
 
 DEVICE_TELEMETRY_UNITS = {
     "device_power_w": "W",
-    "is_on": "bool",
+    "device_on": "bool",
     "device_daily_energy_kwh": "kWh",
 }
 
