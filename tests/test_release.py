@@ -28,6 +28,14 @@ def test_current_release_metadata_matches() -> None:
     assert CHECK.validate_release(f"v{manifest['version']}") == []
 
 
+def test_runtime_container_uses_a_non_root_persistent_profile() -> None:
+    dockerfile = (ROOT / "Dockerfile").read_text()
+    assert 'USER piphi' in dockerfile
+    assert 'VOLUME ["/var/lib/piphi"]' in dockerfile
+    assert 'PIPHI_AUTOMATION_LEDGER_PATH=/var/lib/piphi/automation-actions.sqlite3' in dockerfile
+    assert 'HEALTHCHECK' in dockerfile
+
+
 @pytest.mark.parametrize("tag", ["main", "0.1.0", "v0.1.0-rc1", "v01.1.0", "v0.1.0\n"])
 def test_invalid_release_tags_are_rejected(tag: str) -> None:
     assert CHECK.validate_release(tag)
