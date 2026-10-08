@@ -178,3 +178,11 @@ async def refresh_automation(request: AutomationActionRequest) -> dict[str, Any]
 
 
 assert_behaviors_contract(BEHAVIORS, automations)
+
+
+async def _refresh_all_state() -> None:
+    if sense_service.active_config_id is not None:
+        await sense_service.refresh(force_trends=True)
+
+
+starter.state.provide(_refresh_all_state, source=INTEGRATION_ID)
