@@ -72,7 +72,7 @@ The service exposes `/health`, `/diagnostics`, `/discover`, `/config`, `/config/
 Build the production image with:
 
 ```bash
-docker build -t piphinetwork/piphi-network-sense:0.1.1 .
+docker build -t piphinetwork/piphi-network-sense:0.1.2 .
 ```
 
 ## Releases

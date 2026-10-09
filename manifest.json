@@ -3,7 +3,7 @@
   "manifest_version": "1.0",
   "id": "piphi-network-sense",
   "name": "Sense Energy",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Sense Energy Monitor integration using the unofficial sense-energy cloud API client.",
   "marketplace": {
     "brand_domain": "sense.com",
@@ -70,13 +70,13 @@
     "website": "https://piphi.io"
   },
   "license": "Apache-2.0",
-  "image": "piphinetwork/piphi-network-sense:0.1.1",
+  "image": "piphinetwork/piphi-network-sense:0.1.2",
   "platforms": ["linux"],
   "runtime": {
     "linux": {
       "type": "container",
       "container": {
-        "image": "piphinetwork/piphi-network-sense:0.1.1",
+        "image": "piphinetwork/piphi-network-sense:0.1.2",
         "ports": [{"container": 8090, "host": 8090}],
         "environment": {"LOG_LEVEL": "info", "PIPHI_WIDGET_DIR": "/app/widgets"},
         "restart_policy": {"name": "unless-stopped", "maximum_retry_count": 0}
